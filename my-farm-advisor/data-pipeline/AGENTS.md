@@ -55,6 +55,21 @@ export DATA_PIPELINE_DATA_ROOT=/absolute/path/to/my-farm-advisor-runtime
 export DATA_PIPELINE_VENV_DIR="${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv"
 ```
 
+Generate grower-level interactive web maps after the farm pipeline has
+produced canonical boundaries. The command writes one lightweight Leaflet
+HTML file per grower and a provenance manifest under the grower's
+`manifests/` directory:
+
+```bash
+export DATA_PIPELINE_DATA_ROOT=/absolute/path/to/my-farm-advisor-runtime
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/reporting/generate_grower_web_maps.py --all-growers --check
+```
+
+See [`grower-web-map/GUIDE.md`](grower-web-map/GUIDE.md) for output paths,
+basemap requirements, and validation details.
+
 Persist the default data root for future login sessions:
 
 ```bash

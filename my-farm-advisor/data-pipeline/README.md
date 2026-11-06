@@ -16,6 +16,32 @@ subfolder per output family (`field-maps/`, `soil-maps/`, `maturity/`,
 runtime artifacts stay outside the repo under `DATA_PIPELINE_DATA_ROOT`
 (see `ASSET_POLICY.md` at the repo root).
 
+## Grower web maps
+
+Generate one lightweight interactive HTML map per grower from the canonical
+runtime boundaries. The map uses Leaflet with Esri World Imagery tiles, draws
+every field polygon, and supports click-to-inspect metadata plus zoom-to-field
+controls. The HTML embeds only vector boundaries and field metadata; it does
+not embed imagery, rasters, or base64 data.
+
+See [`grower-web-map/GUIDE.md`](grower-web-map/GUIDE.md) for the workflow,
+inputs, outputs, and browser requirements.
+
+Run it from the installed runtime source copy:
+
+```bash
+export DATA_PIPELINE_DATA_ROOT=/absolute/path/to/my-farm-advisor-runtime
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/reporting/generate_grower_web_maps.py --all-growers --check
+```
+
+Default output:
+
+```text
+${DATA_PIPELINE_DATA_ROOT}/data-pipeline/growers/<grower_slug>/derived/web-maps/<grower_slug>_grower_map.html
+```
+
 
 ## Global parity in one paragraph
 
