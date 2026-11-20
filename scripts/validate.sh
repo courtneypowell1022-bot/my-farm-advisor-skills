@@ -524,6 +524,19 @@ else
   warn 'Geoadmin metadata root missing'
 fi
 
+# Commit-scope guard: audits the staged index only, so pre-existing tracked
+# example assets cannot trip it. It passes when nothing is staged.
+if [[ -f 'scripts/check-commit-scope.sh' ]]; then
+  if scope_output=$(bash scripts/check-commit-scope.sh --quiet 2>&1); then
+    pass 'Commit scope guard (no runtime data staged)'
+  else
+    printf '%s\n' "${scope_output}"
+    fail 'Commit scope guard rejected staged files'
+  fi
+else
+  fail 'Commit scope guard missing (scripts/check-commit-scope.sh)'
+fi
+
 printf '\nSummary: %d pass, %d warn, %d fail\n' "${PASS_COUNT}" "${WARN_COUNT}" "${FAIL_COUNT}"
 
 if (( FAIL_COUNT > 0 )); then

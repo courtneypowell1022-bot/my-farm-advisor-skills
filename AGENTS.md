@@ -29,6 +29,10 @@ Do not commit generated or downloaded runtime assets. Do not track `data/`, `.ca
 
 Runtime geoadmin payload examples include `countries.geojson`, `states_usa.geojson`, and county GeoJSON outputs under `data/my-farm-advisor/shared/geoadmin/`.
 
+Pipeline runtime data belongs under `DATA_PIPELINE_DATA_ROOT` (typically `~/my-farm-advisor-runtime`), never in this repository. That includes `growers/`, `derived/`, `logs/`, `web-maps/`, `.venv/`, root `data/`, `shared/cdl|weather|osm/`, `boundary/field_boundaries.geojson`, per-field `field_boundary.geojson` and `daily_weather.csv`, `*_weather_*.csv`, `*_YYYY_cdl.csv`, `*_crop_rotation.csv`, `field-inventory.csv`, `grower_web_map.json`, `*_grower_map.html`, and raster or archive files.
+
+Small reproducible summaries may be committed when they stay at or below 100 KB per file and 1 MB per commit and document their regeneration command and data date. Audit before committing with `scripts/check-commit-scope.sh`; `scripts/validate.sh` runs the same guard against the staged index.
+
 Metadata, source URL records, downloader scripts, small JSON or GeoJSON metadata, and reproducibility docs may be committed. Binary assets over 1 MB require Git LFS and reviewer approval. Required LFS-backed formats include `.npy`, `.npz`, `.raw`, `.bin`, `.so`, `.dylib`, and `.dll`.
 
 ## Validation
