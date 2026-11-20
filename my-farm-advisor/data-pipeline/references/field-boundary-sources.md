@@ -38,6 +38,11 @@ area_ha_est, crop, area_acres` (+ `source`, and source-specific ids like
 * `--bbox` on ALL ingest scripts is `S W N E`. Getting the order wrong scans
   the whole state — sanity-check county names against the farm's state before
   accepting fields.
+* Expanding an existing farm: pass `--append`. It skips polygons whose
+  `csb_id` is already in `<farm>/boundary/field_boundaries.geojson` and
+  continues `{prefix}N` numbering after the highest existing id, so existing
+  field ids and geometry are preserved (e.g. `il-r1..il-r4` then
+  `il-r5..il-r10`).
 
 ## AU / ON / EU / anywhere OSM maps farms — Overpass (`download_osm_fields.py`)
 

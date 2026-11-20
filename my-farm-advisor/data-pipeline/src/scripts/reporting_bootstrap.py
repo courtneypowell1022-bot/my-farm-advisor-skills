@@ -157,6 +157,25 @@ def _write_json(path: Path, payload: dict, *, overwrite: bool = True) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def _merge_json_defaults(path: Path, defaults: dict) -> None:
+    """Fill in missing metadata keys without clobbering existing values.
+
+    Canonical grower/farm manifests are created once, then enriched by the
+    operator. Rewriting them on every pipeline step used to reset `state`
+    (hardcoded to IA), which sent CDL/weather routing to the wrong state.
+    """
+    payload = dict(defaults)
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            existing = {}
+        if isinstance(existing, dict):
+            payload.update(existing)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def _write_text(path: Path, text: str, *, overwrite: bool = True) -> None:
     if path.exists() and not overwrite:
         return
@@ -387,7 +406,7 @@ def ensure_canonical_data_tree(
     grower.mkdir(parents=True, exist_ok=True)
     (grower / "manifests").mkdir(parents=True, exist_ok=True)
     (grower / "logs").mkdir(parents=True, exist_ok=True)
-    _write_json(
+    _merge_json_defaults(
         grower / "grower.json",
         {
             "grower_slug": grower_slug,
@@ -406,7 +425,7 @@ def ensure_canonical_data_tree(
     (farm / "derived" / "summaries").mkdir(parents=True, exist_ok=True)
     (farm / "derived" / "dashboards").mkdir(parents=True, exist_ok=True)
     (farm / "derived" / "tables").mkdir(parents=True, exist_ok=True)
-    _write_json(
+    _merge_json_defaults(
         farm / "farm.json",
         {
             "grower_slug": grower_slug,

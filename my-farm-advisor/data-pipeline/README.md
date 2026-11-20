@@ -90,6 +90,27 @@ cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
   --force
 ```
 
+### Expand an existing farm with more CSB fields
+
+`bootstrap_farm_from_county.py` samples OSM farmland and is intended for new demo farms. US Corn Belt expansion should come from USDA CSB, and `--append` keeps existing field ids and geometry untouched:
+
+```bash
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/ingest/download_csb_fields.py \
+  --bbox 40.485568 -88.131935 41.010341 -87.525661 \
+  --min-area-ha 40 \
+  --max-fields 6 \
+  --field-prefix il-r \
+  --country US \
+  --state IL \
+  --append
+```
+
+`--bbox` is `S W N E`. With `--append`, polygons whose `csb_id` is already on the farm are skipped and numbering continues after the highest existing `{prefix}N` (for example `il-r5`..`il-r10`). Follow with `download_fields.py`, `download_weather.py --force`, and `download_cdl.py --force` so the canonical tree, weather, and CDL history include the new fields.
+
+CDL extraction resolves the state raster from the boundary `state_fips` property, then the boundary `state` property (USPS code or name), then `farm.json`. It no longer falls back to Iowa when `state_fips` is absent.
+
 For a first run that also initializes shared data and seeds fields for a grower in a state, use the installer directly from the checkout:
 
 ```bash

@@ -48,6 +48,29 @@ cd my-farm-advisor/data-pipeline
 
 Use this pattern when the user asks to initialize the data-pipeline and seed X fields for a grower in a specified state. The seeded farm slug and farm name can be omitted; `farm_dashboard.py create` derives stable defaults from grower and state. Because this path runs the full farm pipeline after seeding boundaries, derived tables, field weather, real DEM terrain, soil outputs, CDL history, satellite/NDVI products, reports, cards, posters, and HTML/Markdown farm reports should generate automatically. The generated farm and field reports do not integrate terrain metrics in this change.
 
+Expand an existing US farm with additional USDA CSB fields. Use
+`download_csb_fields.py --append`; it skips CSB ids already present and
+continues field numbering after the highest existing `{prefix}N`:
+
+```bash
+export DATA_PIPELINE_DATA_ROOT=/absolute/path/to/my-farm-advisor-runtime
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/ingest/download_csb_fields.py \
+  --bbox 40.485568 -88.131935 41.010341 -87.525661 \
+  --min-area-ha 40 \
+  --max-fields 6 \
+  --field-prefix il-r \
+  --country US \
+  --state IL \
+  --append
+```
+
+`--bbox` is `S W N E`. After appending, rerun `download_fields.py`,
+`download_weather.py --force`, and `download_cdl.py --force`. CDL resolves
+the state raster from `state_fips`, then `state`, then `farm.json`; never
+assume Iowa when the property is missing.
+
 Current-shell export for an existing runtime:
 
 ```bash
