@@ -22,6 +22,10 @@ Usage:
   export DATA_PIPELINE_DATA_ROOT=... AG_GROWER_SLUG=... AG_FARM_SLUG=...
   python download_csb_fields.py --bbox S W N E --min-area-ha 40 \
       --field-prefix ia-r --max-fields 3
+
+Expand an existing farm without touching its current fields:
+  python download_csb_fields.py --bbox S W N E --min-area-ha 40 \
+      --field-prefix ia-r --max-fields 6 --append
 """
 from __future__ import annotations
 
@@ -30,6 +34,7 @@ import datetime as _dt
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -65,6 +70,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--min-area-ha", type=float, default=40.0)
     ap.add_argument("--max-fields", type=int, default=3)
     ap.add_argument("--field-prefix", required=True)
+    ap.add_argument(
+        "--append",
+        action="store_true",
+        help=(
+            "Append new fields to an existing farm: skip CSB ids already present "
+            "and continue field numbering after the highest existing {prefix}N"
+        ),
+    )
     ap.add_argument("--country", default="US")
     ap.add_argument("--state", default="")
     ap.add_argument("--year", default="")
@@ -117,6 +130,30 @@ def main(argv: list[str] | None = None) -> int:
                 if ha >= args.min_area_ha:
                     rows.append((fid, crop, county, ha, poly))
     rows.sort(key=lambda r: (-r[3], str(r[0])))
+
+    farm_bounds = farm_dir / "boundary" / "field_boundaries.geojson"
+    existing_ids: set[str] = set()
+    existing_csb: set[str] = set()
+    start_index = 1
+    if args.append and farm_bounds.exists():
+        existing = gpd.read_file(farm_bounds)
+        existing_ids = set(existing["field_id"].astype(str))
+        if "csb_id" in existing.columns:
+            existing_csb = set(existing["csb_id"].dropna().astype(str).str.strip())
+        pattern = re.compile(rf"^{re.escape(args.field_prefix)}(\d+)$")
+        indices = [
+            int(match.group(1))
+            for field_id in existing_ids
+            if (match := pattern.match(field_id))
+        ]
+        start_index = max(indices, default=0) + 1
+        skipped = sum(1 for row in rows if str(row[0]) in existing_csb)
+        rows = [row for row in rows if str(row[0]) not in existing_csb]
+        print(
+            f"append: {len(existing_ids)} existing fields, "
+            f"skipped {skipped} existing CSB polygons, next index {start_index}"
+        )
+
     rows = rows[: args.max_fields]
     if not rows:
         print("no fields above threshold in this window")
@@ -124,9 +161,8 @@ def main(argv: list[str] | None = None) -> int:
 
     inv_rows = []
     merged = None
-    farm_bounds = farm_dir / "boundary" / "field_boundaries.geojson"
     for i, (fid, crop, county, ha, poly) in enumerate(rows):
-        slug = f"{args.field_prefix}{i + 1}"
+        slug = f"{args.field_prefix}{start_index + i}"
         fdir = farm_dir / "fields" / slug
         (fdir / "boundary").mkdir(parents=True, exist_ok=True)
         gdf = gpd.GeoDataFrame(
@@ -167,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
         frame = pd.concat([pd.read_csv(inv), frame]).drop_duplicates(subset="field_id", keep="last")
     frame.to_csv(inv, index=False)
 
+    new_ids = [row["field_id"] for row in inv_rows]
     prov = {
         "source": "FIBOA us-usda-cropland (USDA NASS Crop Sequence Boundaries)",
         "url": URL,
@@ -176,8 +213,11 @@ def main(argv: list[str] | None = None) -> int:
         "row_groups_read": len(sel),
         "total_row_groups": pf.metadata.num_row_groups,
         "min_area_ha": args.min_area_ha,
+        "append": bool(args.append),
+        "start_index": start_index,
+        "existing_fields": sorted(existing_ids),
+        "fields": sorted(existing_ids | set(new_ids)) if args.append else new_ids,
         "accessed_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-        "fields": [r["field_id"] for r in inv_rows],
     }
     mdir = farm_dir / "manifests"
     mdir.mkdir(exist_ok=True)

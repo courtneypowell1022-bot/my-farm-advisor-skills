@@ -66,7 +66,9 @@ Open the subtree index that matches the request:
   months; SH seasons cross calendar years) and classify only imagery in that window; report
   predictions with the honest per-region quality caveat (unvalidated outside reference regions).
   Soil/weather/terrain routing then needs
-  only the boundary's `country` property.
+  only the boundary's `country` property. Use the nested
+  [`grower-web-map`](data-pipeline/grower-web-map/GUIDE.md) workflow to render one lightweight
+  interactive Leaflet map per grower from the canonical boundaries.
 
 ## Runtime Notes
 

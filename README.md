@@ -501,13 +501,18 @@ geneticist — gets both without us choosing their agent harness for them.
 | --- | --- | --- |
 | Admin | [`admin/INDEX.md`](my-farm-advisor/admin/INDEX.md) | Geoadmin workflows and interactive maps |
 | Data sources | [`data-sources/INDEX.md`](my-farm-advisor/data-sources/INDEX.md) | Data rebuilds, deterministic pipeline runs, intelligence reporting |
-| EDA | [`eda/INDEX.md`](my-farm-advisor/eda/INDEX.md) | Exploration, comparisons, correlations, visualization, time series |
+| EDA | [`eda/INDEX.md`](my-farm-advisor/eda/INDEX.md) | Exploration, comparisons, correlations, visualization, time series, field-level EDA across growers |
 | Field management | [`field-management/INDEX.md`](my-farm-advisor/field-management/INDEX.md) | Boundaries, CSB sampling, headlands |
 | Imagery | [`imagery/INDEX.md`](my-farm-advisor/imagery/INDEX.md) | Landsat and Sentinel-2 workflows |
 | Soil | [`soil/INDEX.md`](my-farm-advisor/soil/INDEX.md) | SSURGO, CDL, country routing, poster cards |
 | Strategy | [`strategy/INDEX.md`](my-farm-advisor/strategy/INDEX.md) | Crop strategy and maturity planning |
 | Weather | [`weather/INDEX.md`](my-farm-advisor/weather/INDEX.md) | NASA POWER weather and derived analysis |
 | Data pipeline | [`data-pipeline/README.md`](my-farm-advisor/data-pipeline/README.md) | Country-aware ingest, per-field rendering, runtime management |
+
+Assignment 2 deliverable: the [`field-level-eda`](my-farm-advisor/eda/field-level-eda/GUIDE.md)
+workflow compares boundaries, CDL history, and growing-season weather at field, field-year,
+grower, and across-grower levels. Its one-time write-up is
+[`reports/assignment-2/field-level-eda-report.html`](reports/assignment-2/field-level-eda-report.html).
 
 ### 🌱 My Farm Breeding Trial Management
 

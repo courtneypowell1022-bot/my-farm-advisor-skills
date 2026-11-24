@@ -19,6 +19,7 @@ sys.path.insert(0, str(_SCRIPTS_DIR))
 sys.path.insert(0, str(_SCRIPTS_DIR / "lib"))
 
 from paths import (
+    DATA_ROOT,
     ensure_parent,
     farm_boundary_path,
     farm_cdl_full_composition_path,
@@ -29,6 +30,7 @@ from paths import (
     shared_cdl_state_raster_path,
 )
 from reporting_bootstrap import ensure_skill_path
+from us_states import state_fips as resolve_state_fips
 
 ensure_skill_path("cdl-cropland")
 
@@ -188,14 +190,58 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _state_fips_values(fields: gpd.GeoDataFrame) -> list[str]:
-    if "state_fips" not in fields.columns:
-        return ["19"]
-    values = (
-        pd.Series(fields["state_fips"], dtype="object").fillna("").astype(str).str.strip().tolist()
+def _farm_state(grower_slug: str, farm_slug: str) -> str | None:
+    farm_meta = DATA_ROOT / "growers" / grower_slug / "farms" / farm_slug / "farm.json"
+    if not farm_meta.exists():
+        return None
+    try:
+        payload = json.loads(farm_meta.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    state = payload.get("state")
+    return str(state).strip() if state else None
+
+
+def _state_fips_values(
+    fields: gpd.GeoDataFrame, *, farm_state: str | None = None
+) -> list[str]:
+    """Resolve the CDL state raster(s) from the boundary or the farm manifest.
+
+    Boundaries from `download_csb_fields.py` carry `state` (USPS code) but not
+    `state_fips`; the old Iowa-only fallback silently extracted the wrong
+    raster. Never guess: fail loudly when no state can be resolved.
+    """
+    if fields.empty:
+        return []
+    if "state_fips" in fields.columns:
+        values = (
+            pd.Series(fields["state_fips"], dtype="object")
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .tolist()
+        )
+        unique_values = sorted({value.zfill(2) for value in values if value})
+        if unique_values:
+            return unique_values
+    if "state" in fields.columns:
+        resolved = sorted(
+            {
+                fips
+                for value in fields["state"].dropna().astype(str)
+                if (fips := resolve_state_fips(value))
+            }
+        )
+        if resolved:
+            return resolved
+    if farm_state:
+        fips = resolve_state_fips(farm_state)
+        if fips:
+            return [fips]
+    raise RuntimeError(
+        "Cannot determine state FIPS for CDL extraction: boundary has no usable "
+        "'state_fips' or 'state' property and farm.json has no state."
     )
-    unique_values = sorted({value.zfill(2) for value in values if value})
-    return unique_values or ["19"]
 
 
 def _table_field_ids(csv_path: Path) -> set[str]:
@@ -255,7 +301,9 @@ def main():
             f"  routing {len(canada_fields)} field(s) to AAFC Annual Crop Inventory "
             f"(ACI {ACI_MIN_YEAR}+)"
         )
-    state_fips_values = _state_fips_values(us_fields)
+    state_fips_values = _state_fips_values(
+        us_fields, farm_state=_farm_state(grower_slug, farm_slug)
+    )
     if not us_fields.empty:
         print("State CDL coverage:", ", ".join(state_fips_values))
 
@@ -308,16 +356,22 @@ def main():
         print(f"\n--- {year} CDL/ACI ---")
         state_frames: list[pd.DataFrame] = []
         if not us_fields.empty:
-            for state_fips in state_fips_values:
+            for state_code in state_fips_values:
                 if "state_fips" in us_fields.columns:
-                    state_mask = us_fields["state_fips"].astype(str).str.zfill(2) == state_fips
+                    state_mask = (
+                        us_fields["state_fips"].astype(str).str.zfill(2) == state_code
+                    )
+                elif "state" in us_fields.columns:
+                    state_mask = us_fields["state"].map(
+                        lambda value: resolve_state_fips(value) == state_code
+                    )
                 else:
                     state_mask = pd.Series([True] * len(us_fields), index=us_fields.index)
                 state_fields = us_fields.loc[state_mask].copy()
                 if state_fields.empty:
                     continue
                 try:
-                    cdl_year_path = download_cdl(year, state_fips=state_fips)
+                    cdl_year_path = download_cdl(year, state_fips=state_code)
                 except HTTPError as exc:
                     response = getattr(exc, "response", None)
                     if response is not None and response.status_code == 404:

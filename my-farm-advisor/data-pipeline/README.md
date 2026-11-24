@@ -16,6 +16,32 @@ subfolder per output family (`field-maps/`, `soil-maps/`, `maturity/`,
 runtime artifacts stay outside the repo under `DATA_PIPELINE_DATA_ROOT`
 (see `ASSET_POLICY.md` at the repo root).
 
+## Grower web maps
+
+Generate one lightweight interactive HTML map per grower from the canonical
+runtime boundaries. The map uses Leaflet with Esri World Imagery tiles, draws
+every field polygon, and supports click-to-inspect metadata plus zoom-to-field
+controls. The HTML embeds only vector boundaries and field metadata; it does
+not embed imagery, rasters, or base64 data.
+
+See [`grower-web-map/GUIDE.md`](grower-web-map/GUIDE.md) for the workflow,
+inputs, outputs, and browser requirements.
+
+Run it from the installed runtime source copy:
+
+```bash
+export DATA_PIPELINE_DATA_ROOT=/absolute/path/to/my-farm-advisor-runtime
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/reporting/generate_grower_web_maps.py --all-growers --check
+```
+
+Default output:
+
+```text
+${DATA_PIPELINE_DATA_ROOT}/data-pipeline/growers/<grower_slug>/derived/web-maps/<grower_slug>_grower_map.html
+```
+
 
 ## Global parity in one paragraph
 
@@ -63,6 +89,27 @@ cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
   --run-pipeline \
   --force
 ```
+
+### Expand an existing farm with more CSB fields
+
+`bootstrap_farm_from_county.py` samples OSM farmland and is intended for new demo farms. US Corn Belt expansion should come from USDA CSB, and `--append` keeps existing field ids and geometry untouched:
+
+```bash
+cd "${DATA_PIPELINE_DATA_ROOT}/data-pipeline/src"
+"${DATA_PIPELINE_DATA_ROOT}/data-pipeline/.venv/bin/python" \
+  scripts/ingest/download_csb_fields.py \
+  --bbox 40.485568 -88.131935 41.010341 -87.525661 \
+  --min-area-ha 40 \
+  --max-fields 6 \
+  --field-prefix il-r \
+  --country US \
+  --state IL \
+  --append
+```
+
+`--bbox` is `S W N E`. With `--append`, polygons whose `csb_id` is already on the farm are skipped and numbering continues after the highest existing `{prefix}N` (for example `il-r5`..`il-r10`). Follow with `download_fields.py`, `download_weather.py --force`, and `download_cdl.py --force` so the canonical tree, weather, and CDL history include the new fields.
+
+CDL extraction resolves the state raster from the boundary `state_fips` property, then the boundary `state` property (USPS code or name), then `farm.json`. It no longer falls back to Iowa when `state_fips` is absent.
 
 For a first run that also initializes shared data and seeds fields for a grower in a state, use the installer directly from the checkout:
 
