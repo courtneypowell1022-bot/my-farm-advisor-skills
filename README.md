@@ -509,9 +509,12 @@ geneticist — gets both without us choosing their agent harness for them.
 | Weather | [`weather/INDEX.md`](my-farm-advisor/weather/INDEX.md) | NASA POWER weather and derived analysis |
 | Data pipeline | [`data-pipeline/README.md`](my-farm-advisor/data-pipeline/README.md) | Country-aware ingest, per-field rendering, runtime management |
 
-Assignment 2 deliverable: the [`field-level-eda`](my-farm-advisor/eda/field-level-eda/GUIDE.md)
-workflow compares boundaries, CDL history, and growing-season weather at field, field-year,
-grower, and across-grower levels. Its one-time write-up is
+**`field-level-eda`** — custom EDA skill at
+[`my-farm-advisor/eda/field-level-eda/`](my-farm-advisor/eda/field-level-eda/GUIDE.md)
+(`src/field_eda.py`, documented in `GUIDE.md`). It generates 13 artifacts — 4 statistical
+figures, 3 maps, 5 tables, and a manifest — written to
+`$DATA_PIPELINE_DATA_ROOT/data-pipeline/derived/eda/field-comparison/latest/` and kept out of
+Git. Its one-time write-up is
 [`reports/assignment-2/field-level-eda-report.pdf`](reports/assignment-2/field-level-eda-report.pdf).
 
 ### 🌱 My Farm Breeding Trial Management
