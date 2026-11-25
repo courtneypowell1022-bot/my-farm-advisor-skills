@@ -512,7 +512,7 @@ geneticist — gets both without us choosing their agent harness for them.
 Assignment 2 deliverable: the [`field-level-eda`](my-farm-advisor/eda/field-level-eda/GUIDE.md)
 workflow compares boundaries, CDL history, and growing-season weather at field, field-year,
 grower, and across-grower levels. Its one-time write-up is
-[`reports/assignment-2/field-level-eda-report.html`](reports/assignment-2/field-level-eda-report.html).
+[`reports/assignment-2/field-level-eda-report.pdf`](reports/assignment-2/field-level-eda-report.pdf).
 
 ### 🌱 My Farm Breeding Trial Management
 
